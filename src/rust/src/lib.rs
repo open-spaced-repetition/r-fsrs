@@ -1,6 +1,10 @@
 use extendr_api::prelude::*;
 use fsrs::{FSRS, MemoryState, DEFAULT_PARAMETERS};
 
+const DECAY: f64 = -0.5;
+// FACTOR = 0.9^(1/DECAY) - 1 = 0.9^(-2) - 1 = 1/0.81 - 1 ≈ 0.2346
+const FACTOR: f64 = 19.0 / 81.0;
+
 /// Get default FSRS parameters
 /// @export
 #[extendr]
@@ -73,12 +77,7 @@ fn fsrs_next_state(stability: f64, difficulty: f64, elapsed_days: f64, rating: i
 /// @export
 #[extendr]
 fn fsrs_retrievability(stability: f64, elapsed_days: f64) -> f64 {
-    let fsrs = FSRS::new(Some(&DEFAULT_PARAMETERS)).unwrap();
-    let state = MemoryState { 
-        stability: stability as f32, 
-        difficulty: 5.0 
-    };
-    fsrs.current_retrievability(state, elapsed_days as u32) as f64
+    (1.0 + FACTOR * elapsed_days / stability).powf(DECAY)
 }
 
 extendr_module! {
