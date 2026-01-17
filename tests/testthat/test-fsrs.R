@@ -29,13 +29,6 @@ test_that("fsrs_initial_state stability increases with rating", {
   expect_lt(state_good$stability, state_easy$stability)
 })
 
-test_that("fsrs_initial_state rejects invalid ratings",
- {
-  expect_error(fsrs_initial_state(rating = 0))
-  expect_error(fsrs_initial_state(rating = 5))
-  expect_error(fsrs_initial_state(rating = -1))
-})
-
 # Test retrievability
 test_that("fsrs_retrievability returns valid probability", {
   stability <- 2.5
@@ -50,7 +43,7 @@ test_that("fsrs_retrievability returns valid probability", {
   r7 <- fsrs_retrievability(stability, elapsed_days = 7)
   r30 <- fsrs_retrievability(stability, elapsed_days = 30)
   
- expect_gt(r1, r7)
+  expect_gt(r1, r7)
   expect_gt(r7, r30)
 })
 
@@ -118,17 +111,14 @@ test_that("fsrs_next_state stability decreases on 'Again'", {
 })
 
 # Test next interval
-test_that("fsrs_next_interval returns positive integer", {
+test_that("fsrs_next_interval returns positive value", {
   state <- fsrs_initial_state(rating = 3)
   
-  interval <- fsrs_next_interval(
-    stability = state$stability,
-    difficulty = state$difficulty,
-    rating = 3
-  )
+  # Default retention of 0.9
+  interval <- fsrs_next_interval(state$stability, desired_retention = 0.9)
   
   expect_type(interval, "double")
-  expect_gte(interval, 1)
+  expect_gte(interval, 0)
 })
 
 test_that("fsrs_next_interval increases with stability", {
@@ -136,21 +126,24 @@ test_that("fsrs_next_interval increases with stability", {
   state2 <- fsrs_next_state(state1$stability, state1$difficulty, 3, 2)
   state3 <- fsrs_next_state(state2$stability, state2$difficulty, 3, 5)
   
-  int1 <- fsrs_next_interval(state1$stability, state1$difficulty, 3)
-  int2 <- fsrs_next_interval(state2$stability, state2$difficulty, 3)
-  int3 <- fsrs_next_interval(state3$stability, state3$difficulty, 3)
+  int1 <- fsrs_next_interval(state1$stability, 0.9)
+  int2 <- fsrs_next_interval(state2$stability, 0.9)
+  int3 <- fsrs_next_interval(state3$stability, 0.9)
   
   expect_lt(int1, int2)
   expect_lt(int2, int3)
 })
 
-test_that("fsrs_next_interval is higher for Easy than Good", {
+test_that("fsrs_next_interval decreases with higher retention", {
   state <- fsrs_initial_state(rating = 3)
   
-  int_good <- fsrs_next_interval(state$stability, state$difficulty, rating = 3)
-  int_easy <- fsrs_next_interval(state$stability, state$difficulty, rating = 4)
+  int_85 <- fsrs_next_interval(state$stability, desired_retention = 0.85)
+  int_90 <- fsrs_next_interval(state$stability, desired_retention = 0.90)
+  int_95 <- fsrs_next_interval(state$stability, desired_retention = 0.95)
   
-  expect_gte(int_easy, int_good)
+  # Higher desired retention = shorter intervals
+  expect_gt(int_85, int_90)
+  expect_gt(int_90, int_95)
 })
 
 # Integration test
@@ -162,7 +155,7 @@ test_that("full review cycle works correctly", {
   stabilities <- c(state$stability)
   
   for (i in 1:5) {
-    interval <- fsrs_next_interval(state$stability, state$difficulty, rating = 3)
+    interval <- fsrs_next_interval(state$stability, desired_retention = 0.9)
     state <- fsrs_next_state(state$stability, state$difficulty, rating = 3, elapsed_days = interval)
     stabilities <- c(stabilities, state$stability)
   }

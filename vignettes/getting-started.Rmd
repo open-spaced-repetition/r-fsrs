@@ -18,8 +18,6 @@ knitr::opts_chunk$set(
 
 **rfsrs** provides R bindings for the FSRS (Free Spaced Repetition Scheduler) algorithm. FSRS is a modern spaced repetition algorithm that models human memory more accurately than traditional algorithms like SM-2.
 
-This vignette will introduce you to the core concepts and show you how to use rfsrs for scheduling flashcard reviews.
-
 ```{r setup}
 library(rfsrs)
 ```
@@ -36,26 +34,12 @@ FSRS models memory using two key variables:
 
 ### Retrievability
 
-Retrievability is the probability that you can recall a memory at a given time. It follows the forgetting curve:
-
-$$R(t) = \left(1 + \frac{t}{9S}\right)^{-1}$$
-
-Where $t$ is elapsed time in days and $S$ is stability.
+Retrievability is the probability that you can recall a memory at a given time.
 
 ```{r forgetting-curve}
 # Visualize the forgetting curve for different stability values
 stability_values <- c(1, 5, 10, 30)
 days <- 0:60
-
-# Create data for plotting
-curves <- lapply(stability_values, function(s) {
-  data.frame(
-    day = days,
-    retrievability = sapply(days, function(d) fsrs_retrievability(s, d)),
-    stability = paste("S =", s, "days")
-  )
-})
-curve_data <- do.call(rbind, curves)
 
 # Simple base R plot
 plot(NULL, xlim = c(0, 60), ylim = c(0, 1),
@@ -70,7 +54,6 @@ for (i in seq_along(stability_values)) {
 legend("topright", legend = paste("S =", stability_values, "days"), 
        col = colors, lwd = 2)
 abline(h = 0.9, lty = 2, col = "gray")
-text(55, 0.92, "90% threshold", cex = 0.8)
 ```
 
 ## Basic Usage
@@ -85,7 +68,7 @@ state <- fsrs_initial_state(rating = 3)  # First review, rated "Good"
 print(state)
 ```
 
-The initial stability depends on your rating - higher ratings give higher initial stability:
+The initial stability depends on your rating:
 
 ```{r compare-initial}
 ratings <- 1:4
@@ -114,17 +97,22 @@ for (days in c(1, 3, 7, 14, 30)) {
 
 ### Getting the Next Interval
 
-FSRS calculates the optimal interval for your next review:
+FSRS calculates the optimal interval for your next review based on desired retention:
 
 ```{r next-interval}
 state <- fsrs_initial_state(rating = 3)
 
-# What interval should we use for each possible rating?
-for (rating in 1:4) {
-  interval <- fsrs_next_interval(state$stability, state$difficulty, rating)
-  cat(sprintf("If you rate '%s': review in %d days\n", 
-              rating_names[rating], round(interval)))
-}
+# Get interval for 90% desired retention (default)
+interval_90 <- fsrs_next_interval(state$stability, desired_retention = 0.9)
+cat(sprintf("Interval for 90%% retention: %.1f days\n", interval_90))
+
+# Get interval for 85% desired retention (fewer reviews)
+interval_85 <- fsrs_next_interval(state$stability, desired_retention = 0.85)
+cat(sprintf("Interval for 85%% retention: %.1f days\n", interval_85))
+
+# Get interval for 95% desired retention (more reviews)
+interval_95 <- fsrs_next_interval(state$stability, desired_retention = 0.95)
+cat(sprintf("Interval for 95%% retention: %.1f days\n", interval_95))
 ```
 
 ### Simulating a Review
@@ -160,7 +148,7 @@ cat(sprintf("After review 2: stability=%.2f\n", state$stability))
 Let's simulate learning a card over many reviews:
 
 ```{r simulate-learning}
-simulate_learning <- function(n_reviews = 10, rating = 3) {
+simulate_learning <- function(n_reviews = 10, rating = 3, desired_retention = 0.9) {
   state <- fsrs_initial_state(rating = rating)
   
   results <- data.frame(
@@ -174,7 +162,7 @@ simulate_learning <- function(n_reviews = 10, rating = 3) {
   current_day <- 0
   
   for (i in 1:n_reviews) {
-    interval <- fsrs_next_interval(state$stability, state$difficulty, rating)
+    interval <- fsrs_next_interval(state$stability, desired_retention)
     current_day <- current_day + interval
     state <- fsrs_next_state(state$stability, state$difficulty, rating, interval)
     
@@ -203,75 +191,27 @@ plot(learning$review, learning$stability, type = "b", pch = 19,
 grid()
 ```
 
-```{r plot-intervals}
-# Plot interval growth (excluding first row which has NA)
-intervals <- learning$interval[-1]
-plot(1:length(intervals), intervals, type = "b", pch = 19,
-     xlab = "Review Number", ylab = "Interval (days)",
-     main = "Review Interval Growth")
-grid()
-```
-
-## Effect of Difficulty
-
-Cards with different difficulty levels grow stability at different rates:
-
-```{r difficulty-effect}
-# Compare easy vs difficult cards
-set.seed(42)
-
-simulate_with_difficulty <- function(initial_rating, ongoing_rating, n = 10) {
-  state <- fsrs_initial_state(rating = initial_rating)
-  stabilities <- state$stability
-  
-  for (i in 1:n) {
-    interval <- fsrs_next_interval(state$stability, state$difficulty, ongoing_rating)
-    state <- fsrs_next_state(state$stability, state$difficulty, ongoing_rating, interval)
-    stabilities <- c(stabilities, state$stability)
-  }
-  
-  return(stabilities)
-}
-
-# Easy card (high initial rating, then Good)
-easy_card <- simulate_with_difficulty(initial_rating = 4, ongoing_rating = 3)
-
-# Hard card (low initial rating, then Good)
-hard_card <- simulate_with_difficulty(initial_rating = 2, ongoing_rating = 3)
-
-# Plot comparison
-plot(0:10, easy_card, type = "b", pch = 19, col = "blue",
-     xlab = "Review Number", ylab = "Stability (days)",
-     main = "Stability Growth: Easy vs Hard Cards",
-     ylim = c(0, max(easy_card, hard_card)))
-lines(0:10, hard_card, type = "b", pch = 19, col = "red")
-legend("topleft", legend = c("Easy start", "Hard start"),
-       col = c("blue", "red"), pch = 19, lty = 1)
-grid()
-```
-
 ## FSRS Parameters
 
 FSRS uses 21 parameters that control the algorithm's behavior:
 
 ```{r parameters}
 params <- fsrs_default_parameters()
-cat("FSRS-6 default parameters:\n")
-print(params)
+cat("FSRS-6 default parameters (", length(params), " values):\n", sep = "")
+print(round(params, 4))
 ```
-
-These parameters can be optimized for individual users based on their review history. The rfsrs package currently uses the default parameters, which work well for most users.
 
 ## Summary
 
-Key takeaways:
+Key functions:
 
-1. **Stability** represents memory durability and grows with successful reviews
-2. **Difficulty** affects how quickly stability grows
-3. **Retrievability** is the probability of recall, following a forgetting curve
-4. Use `fsrs_initial_state()` for new cards, `fsrs_next_state()` after reviews
-5. Use `fsrs_next_interval()` to schedule the next review
-6. Use `fsrs_retrievability()` to check current recall probability
+| Function | Description |
+|----------|-------------|
+| `fsrs_default_parameters()` | Get the 21 default FSRS-6 parameters |
+| `fsrs_initial_state(rating)` | Create initial memory state for a new card |
+| `fsrs_next_state(stability, difficulty, rating, elapsed_days)` | Calculate next state after review |
+| `fsrs_next_interval(stability, desired_retention)` | Get optimal interval for desired retention |
+| `fsrs_retrievability(stability, elapsed_days)` | Calculate probability of recall |
 
 For more information, see:
 
