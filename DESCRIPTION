@@ -1,6 +1,6 @@
 Package: rfsrs
 Title: R Bindings for FSRS Spaced Repetition Algorithm
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Christos", "Longros", email = "chris.longros@gmail.com",
     role = c("aut", "cre"))
 Description: R bindings for the fsrs-rs Rust library implementing the Free 

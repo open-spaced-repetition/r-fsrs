@@ -1,0 +1,22 @@
+Card                    FSRS Card
+Card_from_json          Create Card from JSON
+Rating                  FSRS Rating
+ReviewLog               FSRS Review Log
+Scheduler               FSRS Scheduler
+Scheduler_from_json     Create Scheduler from JSON
+State                   FSRS State
+fsrs_default_parameters
+                        Get default FSRS parameters (21 values for
+                        FSRS-6)
+fsrs_from_sm2           Convert SM-2 ease factor and interval to FSRS
+                        memory state
+fsrs_initial_state      Initial memory state for new card
+fsrs_memory_state       Compute memory state from review history
+fsrs_next_interval      Calculate next interval for target retention
+fsrs_next_state         Next memory state after review
+fsrs_repeat             Get all four rating outcomes at once (like
+                        py-fsrs repeat())
+fsrs_retrievability     Calculate retrievability (recall probability)
+fsrs_retrievability_vec
+                        Vectorized retrievability calculation
+fsrs_simulate           Simulate Learning a Card
