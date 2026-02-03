@@ -151,4 +151,6 @@ The forgetting curve: `R(t) = (1 + t/(9·S))^(-0.5)`
 
 ## License
 
-MIT
+MIT © 2026 [Christos Longros](https://github.com/chrislongros)
+
+Based on [fsrs-rs](https://github.com/open-spaced-repetition/fsrs-rs) by the Open Spaced Repetition project.
