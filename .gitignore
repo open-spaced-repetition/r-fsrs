@@ -4,3 +4,4 @@ src/Makevars.win
 *.tar.gz
 *.Rcheck
 r-fsrs-update/
+/Meta/
