@@ -413,3 +413,131 @@ fsrs_simulate <- function(ratings, params = NULL, desired_retention = 0.9) {
   
   do.call(rbind, results)
 }
+
+# ============================================================================
+# VERSION
+# ============================================================================
+
+#' Get the FSRS algorithm version used by this package
+#' @return Character string, e.g. "FSRS-5"
+#' @export
+fsrs_version <- function() {
+  "FSRS-5"
+}
+
+# ============================================================================
+# VALIDATED PUBLIC WRAPPERS (input checking before hitting Rust)
+# ============================================================================
+
+#' @title Get Default FSRS Parameters (validated)
+#' @description Returns the 21 default FSRS model weights.
+#' @return Numeric vector of length 21
+#' @export
+fsrs_parameters <- function() {
+  fsrs_default_parameters()
+}
+
+#' @title Compute Retrievability (validated)
+#' @param stability Positive numeric. Memory stability in days.
+#' @param elapsed_days Non-negative numeric. Days since last review.
+#' @return Numeric probability in [0, 1]
+#' @export
+fsrs_recall_probability <- function(stability, elapsed_days) {
+  stopifnot(
+    is.numeric(stability), length(stability) == 1, stability > 0,
+    is.numeric(elapsed_days), length(elapsed_days) == 1, elapsed_days >= 0
+  )
+  fsrs_retrievability(stability, elapsed_days)
+}
+
+#' @title Compute Retrievability for Vectors (validated)
+#' @param stability Numeric vector of stability values (all > 0)
+#' @param elapsed_days Numeric vector of elapsed days (all >= 0)
+#' @return Numeric vector of probabilities
+#' @export
+fsrs_recall_probability_vec <- function(stability, elapsed_days) {
+  stopifnot(
+    is.numeric(stability), all(stability > 0),
+    is.numeric(elapsed_days), all(elapsed_days >= 0),
+    length(stability) == length(elapsed_days)
+  )
+  fsrs_retrievability_vec(stability, elapsed_days)
+}
+
+#' @title Get Initial Memory State (validated)
+#' @param rating Integer 1-4. 1=Again, 2=Hard, 3=Good, 4=Easy
+#' @param params Optional vector of 21 FSRS parameters
+#' @return List with $stability and $difficulty
+#' @export
+fsrs_new_card_state <- function(rating, params = NULL) {
+  stopifnot(
+    is.numeric(rating) || is.integer(rating),
+    length(rating) == 1,
+    rating %in% 1:4
+  )
+  if (!is.null(params)) {
+    stopifnot(is.numeric(params), length(params) == 21)
+  }
+  fsrs_initial_state(as.integer(rating), params)
+}
+
+#' @title Get Next Memory State After Review (validated)
+#' @param stability Positive numeric. Current stability.
+#' @param difficulty Numeric in [1, 10]. Current difficulty.
+#' @param elapsed_days Non-negative numeric. Days since last review.
+#' @param rating Integer 1-4. Review rating.
+#' @param params Optional vector of 21 FSRS parameters
+#' @return List with $stability and $difficulty
+#' @export
+fsrs_next_memory_state <- function(stability, difficulty, elapsed_days, rating, params = NULL) {
+  stopifnot(
+    is.numeric(stability), length(stability) == 1, stability > 0,
+    is.numeric(difficulty), length(difficulty) == 1,
+      difficulty >= 1, difficulty <= 10,
+    is.numeric(elapsed_days), length(elapsed_days) == 1, elapsed_days >= 0,
+    (is.numeric(rating) || is.integer(rating)), length(rating) == 1,
+      rating %in% 1:4
+  )
+  if (!is.null(params)) {
+    stopifnot(is.numeric(params), length(params) == 21)
+  }
+  fsrs_next_state(stability, difficulty, elapsed_days, as.integer(rating), params)
+}
+
+#' @title Get Next Review Interval (validated)
+#' @param stability Positive numeric. Memory stability in days.
+#' @param desired_retention Numeric in (0, 1). Target recall probability.
+#' @param params Optional vector of 21 FSRS parameters
+#' @return Positive numeric. Recommended interval in days.
+#' @export
+fsrs_interval <- function(stability, desired_retention = 0.9, params = NULL) {
+  stopifnot(
+    is.numeric(stability), length(stability) == 1, stability > 0,
+    is.numeric(desired_retention), length(desired_retention) == 1,
+      desired_retention > 0, desired_retention < 1
+  )
+  if (!is.null(params)) {
+    stopifnot(is.numeric(params), length(params) == 21)
+  }
+  fsrs_next_interval(stability, desired_retention, params)
+}
+
+#' @title Migrate SM-2 Card to FSRS (validated)
+#' @param ease_factor Numeric. SM-2 ease factor (typically 1.3 - 3.5).
+#' @param interval Positive numeric. Current SM-2 interval in days.
+#' @param sm2_retention Numeric in (0, 1). Target retention used in SM-2.
+#' @param params Optional vector of 21 FSRS parameters
+#' @return List with $stability and $difficulty
+#' @export
+fsrs_migrate_sm2 <- function(ease_factor, interval, sm2_retention = 0.9, params = NULL) {
+  stopifnot(
+    is.numeric(ease_factor), length(ease_factor) == 1, ease_factor >= 1,
+    is.numeric(interval), length(interval) == 1, interval > 0,
+    is.numeric(sm2_retention), length(sm2_retention) == 1,
+      sm2_retention > 0, sm2_retention < 1
+  )
+  if (!is.null(params)) {
+    stopifnot(is.numeric(params), length(params) == 21)
+  }
+  fsrs_from_sm2(ease_factor, interval, sm2_retention, params)
+}

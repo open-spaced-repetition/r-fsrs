@@ -143,8 +143,11 @@ fsrs_anki_to_reviews <- function(revlog, min_reviews = 2) {
   df <- data.frame(
     card_id = revlog[[card_col]],
     rating = revlog[[rating_col]],
-    time_ms = revlog[[time_col]]
+    time_ms = revlog[[time_col]],
+    review_type = if ("type" %in% names(revlog)) revlog[["type"]] else 1L
   )
+  # Keep only review (1) and relearn (2) rows; exclude learning steps (0) and filtered (3)
+  df <- df[df$review_type %in% c(1L, 2L), ]
   df <- df[df$rating >= 1 & df$rating <= 4, ]
   df <- df[order(df$card_id, df$time_ms), ]
   df$delta_t <- stats::ave(df$time_ms, df$card_id, FUN = function(x) {
