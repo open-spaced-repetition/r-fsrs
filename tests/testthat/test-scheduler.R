@@ -1,5 +1,3 @@
-# Tests for Card, Scheduler, and state machine transitions
-# These cover the R6 layer added in v0.3.0
 
 test_that("Card initializes with correct defaults", {
   card <- Card$new()
