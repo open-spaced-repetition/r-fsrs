@@ -349,14 +349,14 @@ Scheduler <- R6::R6Class(
     # State transition logic matching py-fsrs/rs-fsrs
     next_card_state = function(previous_state, rating) {
       if (rating == Rating$Again) {
-        # Again always puts card in learning/relearning
-        if (previous_state == State$New) {
-          State$Learning
-        } else {
-          State$Relearning
-        }
+        if (previous_state == State$New) State$Learning
+        else State$Relearning
+      } else if (previous_state == State$New) {
+        State$Learning
+      } else if (previous_state == State$Learning) {
+        if (rating == Rating$Hard) State$Learning
+        else State$Review
       } else {
-        # Hard/Good/Easy graduate the card to Review
         State$Review
       }
     }
