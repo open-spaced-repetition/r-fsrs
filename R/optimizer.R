@@ -39,7 +39,9 @@ fsrs_optimize <- function(reviews, enable_short_term = TRUE, verbose = TRUE) {
   if (length(missing_cols) > 0) {
     stop("reviews must have columns: ", paste(missing_cols, collapse = ", "))
   }
-  if (nrow(reviews) < 10) stop("Need at least 10 reviews for optimization")
+  card_review_counts <- table(reviews$card_id)
+  valid_cards_check <- sum(card_review_counts >= 2)
+  if (valid_cards_check < 5) stop("Need at least 5 cards with 2+ reviews for optimization")
   if (any(reviews$rating < 1 | reviews$rating > 4, na.rm = TRUE)) {
     stop("All ratings must be between 1 and 4")
   }

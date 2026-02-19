@@ -86,7 +86,7 @@ Card <- R6::R6Class(
     },
     
     #' @description Clone the card
-    clone_card = function() {
+    deep_clone = function() {
       new_card <- Card$new(self$due)
       new_card$stability <- self$stability
       new_card$difficulty <- self$difficulty
@@ -396,9 +396,11 @@ fsrs_simulate <- function(ratings, params = NULL, desired_retention = 0.9) {
   card <- Card$new()
   
   results <- vector("list", length(ratings))
-  
+  now <- Sys.time()
+
   for (i in seq_along(ratings)) {
-    result <- scheduler$review_card(card, ratings[i])
+    result <- scheduler$review_card(card, ratings[i], review_datetime = now)
+    now <- now + as.difftime(card$scheduled_days, units = "days")
     results[[i]] <- data.frame(
       review = i,
       rating = ratings[i],
