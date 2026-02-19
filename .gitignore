@@ -5,3 +5,4 @@ src/Makevars.win
 *.Rcheck
 r-fsrs-update/
 /Meta/
+src/rust/vendor/
