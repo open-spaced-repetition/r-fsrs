@@ -1,9 +1,4 @@
 # ============================================================================
-# IMPROVED fsrs_api.R
-# Key changes:
-# 1. Scheduler actually uses custom parameters
-# 2. Better state transitions
-# 3. Added preview_card() method
 # ============================================================================
 
 #' @title FSRS Rating
@@ -378,7 +373,7 @@ Scheduler_from_json <- function(json) {
 }
 
 # ============================================================================
-# CONVENIENCE FUNCTIONS
+# Convenience functions
 # ============================================================================
 
 #' @title Simulate Learning a Card
