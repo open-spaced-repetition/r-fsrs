@@ -12,7 +12,7 @@ R6 class representing a flashcard
 \item \href{#method-Card-new}{\code{Card$new()}}
 \item \href{#method-Card-get_retrievability}{\code{Card$get_retrievability()}}
 \item \href{#method-Card-to_json}{\code{Card$to_json()}}
-\item \href{#method-Card-clone_card}{\code{Card$clone_card()}}
+\item \href{#method-Card-deep_clone}{\code{Card$deep_clone()}}
 \item \href{#method-Card-print}{\code{Card$print()}}
 \item \href{#method-Card-clone}{\code{Card$clone()}}
 }
@@ -62,12 +62,12 @@ Serialize card to JSON
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Card-clone_card"></a>}}
-\if{latex}{\out{\hypertarget{method-Card-clone_card}{}}}
-\subsection{Method \code{clone_card()}}{
+\if{html}{\out{<a id="method-Card-deep_clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Card-deep_clone}{}}}
+\subsection{Method \code{deep_clone()}}{
 Clone the card
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Card$clone_card()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Card$deep_clone()}\if{html}{\out{</div>}}
 }
 
 }
