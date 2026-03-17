@@ -64,7 +64,7 @@ When you first learn a card, you create an initial memory state based on your fi
 
 ```{r initial-state}
 # Rating scale: 1=Again, 2=Hard, 3=Good, 4=Easy
-state <- fsrs_initial_state(rating = 3)  # First review, rated "Good"
+state <- fsrs_new_card_state(rating = 3)  # First review, rated "Good"
 print(state)
 ```
 
@@ -75,7 +75,7 @@ ratings <- 1:4
 rating_names <- c("Again", "Hard", "Good", "Easy")
 
 for (i in ratings) {
-  s <- fsrs_initial_state(rating = i)
+  s <- fsrs_new_card_state(rating = i)
   cat(sprintf("%s (rating=%d): stability=%.2f, difficulty=%.2f\n",
               rating_names[i], i, s$stability, s$difficulty))
 }
@@ -86,7 +86,7 @@ for (i in ratings) {
 After a review, you can check how well you'll remember the card over time:
 
 ```{r check-retrievability}
-state <- fsrs_initial_state(rating = 3)
+state <- fsrs_new_card_state(rating = 3)
 
 cat("Retrievability after:\n")
 for (days in c(1, 3, 7, 14, 30)) {
@@ -100,18 +100,18 @@ for (days in c(1, 3, 7, 14, 30)) {
 FSRS calculates the optimal interval for your next review based on desired retention:
 
 ```{r next-interval}
-state <- fsrs_initial_state(rating = 3)
+state <- fsrs_new_card_state(rating = 3)
 
 # Get interval for 90% desired retention (default)
-interval_90 <- fsrs_next_interval(state$stability, desired_retention = 0.9)
+interval_90 <- fsrs_interval(state$stability, desired_retention = 0.9)
 cat(sprintf("Interval for 90%% retention: %.1f days\n", interval_90))
 
 # Get interval for 85% desired retention (fewer reviews)
-interval_85 <- fsrs_next_interval(state$stability, desired_retention = 0.85)
+interval_85 <- fsrs_interval(state$stability, desired_retention = 0.85)
 cat(sprintf("Interval for 85%% retention: %.1f days\n", interval_85))
 
 # Get interval for 95% desired retention (more reviews)
-interval_95 <- fsrs_next_interval(state$stability, desired_retention = 0.95)
+interval_95 <- fsrs_interval(state$stability, desired_retention = 0.95)
 cat(sprintf("Interval for 95%% retention: %.1f days\n", interval_95))
 ```
 
@@ -121,7 +121,7 @@ After reviewing a card, update the memory state:
 
 ```{r next-state}
 # Initial state
-state <- fsrs_initial_state(rating = 3)
+state <- fsrs_new_card_state(rating = 3)
 cat(sprintf("Initial: stability=%.2f\n", state$stability))
 
 # Review after 2 days, rate "Good"
@@ -149,7 +149,7 @@ Let's simulate learning a card over many reviews:
 
 ```{r simulate-learning}
 simulate_learning <- function(n_reviews = 10, rating = 3, desired_retention = 0.9) {
-  state <- fsrs_initial_state(rating = rating)
+  state <- fsrs_new_card_state(rating = rating)
   
   results <- data.frame(
     review = 0,
@@ -162,7 +162,7 @@ simulate_learning <- function(n_reviews = 10, rating = 3, desired_retention = 0.
   current_day <- 0
   
   for (i in 1:n_reviews) {
-    interval <- fsrs_next_interval(state$stability, desired_retention)
+    interval <- fsrs_interval(state$stability, desired_retention)
     current_day <- current_day + interval
     state <- fsrs_next_memory_state(state$stability, state$difficulty, interval, rating,
                                        desired_retention)
@@ -209,9 +209,9 @@ Key functions:
 | Function | Description |
 |----------|-------------|
 | `fsrs_default_parameters()` | Get the 21 default FSRS-6 parameters |
-| `fsrs_initial_state(rating)` | Create initial memory state for a new card |
+| `fsrs_new_card_state(rating)` | Create initial memory state for a new card |
 | `fsrs_next_memory_state(stability, difficulty, elapsed_days, rating)` | Calculate next state after review |
-| `fsrs_next_interval(stability, desired_retention)` | Get optimal interval for desired retention |
+| `fsrs_interval(stability, desired_retention)` | Get optimal interval for desired retention |
 | `fsrs_retrievability(stability, elapsed_days)` | Calculate probability of recall |
 
 For more information, see:
