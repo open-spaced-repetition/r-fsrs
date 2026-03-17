@@ -264,8 +264,8 @@ Scheduler <- R6::R6Class(
         new_state <- fsrs_initial_state(rating, self$parameters)
       } else {
         new_state <- fsrs_next_state(
-          card$stability, card$difficulty, elapsed_days, rating, 
-          self$parameters
+          card$stability, card$difficulty, elapsed_days, rating,
+          self$desired_retention, self$parameters
         )
       }
       
@@ -473,22 +473,27 @@ fsrs_new_card_state <- function(rating, params = NULL) {
 #' @param difficulty Current difficulty (1-10).
 #' @param elapsed_days Days since last review.
 #' @param rating Review rating (1-4).
+#' @param desired_retention Target recall probability (default 0.9).
 #' @param params Optional vector of 21 FSRS parameters
 #' @return Named list with `stability` and `difficulty`.
 #' @export
-fsrs_next_memory_state <- function(stability, difficulty, elapsed_days, rating, params = NULL) {
+fsrs_next_memory_state <- function(stability, difficulty, elapsed_days, rating,
+                                   desired_retention = 0.9, params = NULL) {
   stopifnot(
     is.numeric(stability), length(stability) == 1, stability > 0,
     is.numeric(difficulty), length(difficulty) == 1,
       difficulty >= 1, difficulty <= 10,
     is.numeric(elapsed_days), length(elapsed_days) == 1, elapsed_days >= 0,
     (is.numeric(rating) || is.integer(rating)), length(rating) == 1,
-      rating %in% 1:4
+      rating %in% 1:4,
+    is.numeric(desired_retention), length(desired_retention) == 1,
+      desired_retention > 0, desired_retention < 1
   )
   if (!is.null(params)) {
     stopifnot(is.numeric(params), length(params) == 21)
   }
-  fsrs_next_state(stability, difficulty, elapsed_days, as.integer(rating), params)
+  fsrs_next_state(stability, difficulty, elapsed_days, as.integer(rating),
+                  desired_retention, params)
 }
 
 #' @title Next review interval

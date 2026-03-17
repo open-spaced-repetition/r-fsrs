@@ -43,19 +43,20 @@ fn fsrs_initial_state(rating: i32, params: Option<Vec<f64>>) -> List {
 
 #[extendr]
 fn fsrs_next_state(
-    stability: f64, 
-    difficulty: f64, 
-    elapsed_days: f64, 
+    stability: f64,
+    difficulty: f64,
+    elapsed_days: f64,
     rating: i32,
+    desired_retention: f64,
     params: Option<Vec<f64>>
 ) -> List {
     let fsrs = create_fsrs(params);
-    let state = MemoryState { 
-        stability: stability as f32, 
-        difficulty: difficulty as f32 
+    let state = MemoryState {
+        stability: stability as f32,
+        difficulty: difficulty as f32
     };
     let r = (rating as u32).min(4).max(1);
-    let states = fsrs.next_states(Some(state), elapsed_days as f32, 0).unwrap();
+    let states = fsrs.next_states(Some(state), desired_retention as f32, elapsed_days as u32).unwrap();
     let next = match r {
         1 => states.again.memory,
         2 => states.hard.memory,
@@ -87,7 +88,7 @@ fn fsrs_repeat(
         _ => None,
     };
     
-    let states = fsrs.next_states(state, elapsed_days as f32, 0).unwrap();
+    let states = fsrs.next_states(state, desired_retention as f32, elapsed_days as u32).unwrap();
     
     let make_outcome = |item: &fsrs::ItemState| -> List {
         let interval = fsrs.next_interval(

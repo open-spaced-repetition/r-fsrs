@@ -9,6 +9,7 @@ fsrs_next_memory_state(
   difficulty,
   elapsed_days,
   rating,
+  desired_retention = 0.9,
   params = NULL
 )
 }
@@ -20,6 +21,8 @@ fsrs_next_memory_state(
 \item{elapsed_days}{Days since last review.}
 
 \item{rating}{Review rating (1-4).}
+
+\item{desired_retention}{Target recall probability (default 0.9).}
 
 \item{params}{Optional vector of 21 FSRS parameters}
 }

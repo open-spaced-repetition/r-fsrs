@@ -12,25 +12,25 @@ NULL
 
 fsrs_default_parameters <- function() .Call(wrap__fsrs_default_parameters)
 
-fsrs_next_interval <- function(stability, desired_retention, params = NULL) .Call(wrap__fsrs_next_interval, stability, desired_retention, params)
+fsrs_next_interval <- function(stability, desired_retention, params) .Call(wrap__fsrs_next_interval, stability, desired_retention, params)
 
-fsrs_initial_state <- function(rating, params = NULL) .Call(wrap__fsrs_initial_state, rating, params)
+fsrs_initial_state <- function(rating, params) .Call(wrap__fsrs_initial_state, rating, params)
 
-fsrs_next_state <- function(stability, difficulty, elapsed_days, rating, params = NULL) .Call(wrap__fsrs_next_state, stability, difficulty, elapsed_days, rating, params)
+fsrs_next_state <- function(stability, difficulty, elapsed_days, rating, desired_retention, params) .Call(wrap__fsrs_next_state, stability, difficulty, elapsed_days, rating, desired_retention, params)
 
-fsrs_repeat <- function(stability = NULL, difficulty = NULL, elapsed_days, desired_retention, params = NULL) .Call(wrap__fsrs_repeat, stability, difficulty, elapsed_days, desired_retention, params)
+fsrs_repeat <- function(stability, difficulty, elapsed_days, desired_retention, params) .Call(wrap__fsrs_repeat, stability, difficulty, elapsed_days, desired_retention, params)
 
 fsrs_retrievability <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability, stability, elapsed_days)
 
 fsrs_retrievability_vec <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability_vec, stability, elapsed_days)
 
-fsrs_from_sm2 <- function(ease_factor, interval, sm2_retention, params = NULL) .Call(wrap__fsrs_from_sm2, ease_factor, interval, sm2_retention, params)
+fsrs_from_sm2 <- function(ease_factor, interval, sm2_retention, params) .Call(wrap__fsrs_from_sm2, ease_factor, interval, sm2_retention, params)
 
-fsrs_memory_state <- function(ratings, delta_ts, initial_stability = NULL, initial_difficulty = NULL, params = NULL) .Call(wrap__fsrs_memory_state, ratings, delta_ts, initial_stability, initial_difficulty, params)
+fsrs_memory_state <- function(ratings, delta_ts, initial_stability, initial_difficulty, params) .Call(wrap__fsrs_memory_state, ratings, delta_ts, initial_stability, initial_difficulty, params)
 
-fsrs_optimize_raw <- function(ratings, delta_ts, card_starts, enable_short_term) .Call(wrap__fsrs_optimize, ratings, delta_ts, card_starts, enable_short_term)
+fsrs_optimize <- function(ratings, delta_ts, card_starts, enable_short_term) .Call(wrap__fsrs_optimize, ratings, delta_ts, card_starts, enable_short_term)
 
-fsrs_evaluate_raw <- function(ratings, delta_ts, card_starts, params) .Call(wrap__fsrs_evaluate, ratings, delta_ts, card_starts, params)
+fsrs_evaluate <- function(ratings, delta_ts, card_starts, params) .Call(wrap__fsrs_evaluate, ratings, delta_ts, card_starts, params)
 
 
 # nolint end
