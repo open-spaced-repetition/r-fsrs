@@ -10,16 +10,21 @@
 #' @useDynLib rfsrs, .registration = TRUE
 NULL
 
+#' @export
 fsrs_default_parameters <- function() .Call(wrap__fsrs_default_parameters)
 
+#' @export
 fsrs_next_interval <- function(stability, desired_retention, params) .Call(wrap__fsrs_next_interval, stability, desired_retention, params)
 
+#' @export
 fsrs_initial_state <- function(rating, params) .Call(wrap__fsrs_initial_state, rating, params)
 
+#' @export
 fsrs_next_state <- function(stability, difficulty, elapsed_days, rating, desired_retention, params) .Call(wrap__fsrs_next_state, stability, difficulty, elapsed_days, rating, desired_retention, params)
 
 fsrs_repeat <- function(stability, difficulty, elapsed_days, desired_retention, params) .Call(wrap__fsrs_repeat, stability, difficulty, elapsed_days, desired_retention, params)
 
+#' @export
 fsrs_retrievability <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability, stability, elapsed_days)
 
 fsrs_retrievability_vec <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability_vec, stability, elapsed_days)

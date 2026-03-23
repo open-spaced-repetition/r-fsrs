@@ -1,4 +1,7 @@
 
+#' @importFrom R6 R6Class
+#' @importFrom stats ave
+
 #' @title FSRS Rating
 #' @description Rating values for card reviews
 #' @export
