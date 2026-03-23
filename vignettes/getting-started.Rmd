@@ -48,7 +48,7 @@ plot(NULL, xlim = c(0, 60), ylim = c(0, 1),
 colors <- c("red", "orange", "blue", "green")
 for (i in seq_along(stability_values)) {
   s <- stability_values[i]
-  r <- sapply(days, function(d) fsrs_retrievability(s, d))
+  r <- sapply(days, function(d) fsrs_recall_probability(s, d))
   lines(days, r, col = colors[i], lwd = 2)
 }
 legend("topright", legend = paste("S =", stability_values, "days"), 
@@ -90,7 +90,7 @@ state <- fsrs_new_card_state(rating = 3)
 
 cat("Retrievability after:\n")
 for (days in c(1, 3, 7, 14, 30)) {
-  r <- fsrs_retrievability(state$stability, elapsed_days = days)
+  r <- fsrs_recall_probability(state$stability, elapsed_days = days)
   cat(sprintf("  %2d days: %.1f%%\n", days, r * 100))
 }
 ```
@@ -197,7 +197,7 @@ grid()
 FSRS uses 21 parameters that control the algorithm's behavior:
 
 ```{r parameters}
-params <- fsrs_default_parameters()
+params <- fsrs_parameters()
 cat("FSRS-6 default parameters (", length(params), " values):\n", sep = "")
 print(round(params, 4))
 ```
@@ -208,11 +208,11 @@ Key functions:
 
 | Function | Description |
 |----------|-------------|
-| `fsrs_default_parameters()` | Get the 21 default FSRS-6 parameters |
+| `fsrs_parameters()` | Get the 21 default FSRS-6 parameters |
 | `fsrs_new_card_state(rating)` | Create initial memory state for a new card |
 | `fsrs_next_memory_state(stability, difficulty, elapsed_days, rating)` | Calculate next state after review |
 | `fsrs_interval(stability, desired_retention)` | Get optimal interval for desired retention |
-| `fsrs_retrievability(stability, elapsed_days)` | Calculate probability of recall |
+| `fsrs_recall_probability(stability, elapsed_days)` | Calculate probability of recall |
 
 For more information, see:
 

@@ -33,9 +33,9 @@ fsrs_from_sm2 <- function(ease_factor, interval, sm2_retention, params) .Call(wr
 
 fsrs_memory_state <- function(ratings, delta_ts, initial_stability, initial_difficulty, params) .Call(wrap__fsrs_memory_state, ratings, delta_ts, initial_stability, initial_difficulty, params)
 
-fsrs_optimize <- function(ratings, delta_ts, card_starts, enable_short_term) .Call(wrap__fsrs_optimize, ratings, delta_ts, card_starts, enable_short_term)
+fsrs_optimize_raw <- function(ratings, delta_ts, card_starts, enable_short_term) .Call(wrap__fsrs_optimize, ratings, delta_ts, card_starts, enable_short_term)
 
-fsrs_evaluate <- function(ratings, delta_ts, card_starts, params) .Call(wrap__fsrs_evaluate, ratings, delta_ts, card_starts, params)
+fsrs_evaluate_raw <- function(ratings, delta_ts, card_starts, params) .Call(wrap__fsrs_evaluate, ratings, delta_ts, card_starts, params)
 
 
 # nolint end
