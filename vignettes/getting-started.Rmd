@@ -36,7 +36,7 @@ FSRS models memory using two key variables:
 
 Retrievability is the probability that you can recall a memory at a given time.
 
-```{r forgetting-curve}
+```{r forgetting-curve, fig.width=7, fig.height=5}
 # Visualize the forgetting curve for different stability values
 stability_values <- c(1, 5, 10, 30)
 days <- 0:60
@@ -184,11 +184,53 @@ learning <- simulate_learning(n_reviews = 10, rating = 3)
 print(learning)
 ```
 
-```{r plot-learning}
-# Plot stability growth
-plot(learning$review, learning$stability, type = "b", pch = 19,
-     xlab = "Review Number", ylab = "Stability (days)",
-     main = "Stability Growth Over Reviews")
+```{r plot-learning, fig.width=7, fig.height=5}
+# Simulate a realistic learner who sometimes struggles
+simulate_realistic <- function(ratings, desired_retention = 0.9) {
+  state <- fsrs_new_card_state(rating = ratings[1])
+
+  results <- data.frame(
+    review = 0,
+    day = 0,
+    stability = state$stability,
+    difficulty = state$difficulty,
+    interval = NA,
+    rating = ratings[1]
+  )
+
+  current_day <- 0
+
+  for (i in seq_along(ratings)[-1]) {
+    interval <- fsrs_interval(state$stability, desired_retention)
+    current_day <- current_day + interval
+    state <- fsrs_next_memory_state(state$stability, state$difficulty, interval,
+                                    ratings[i], desired_retention)
+
+    results <- rbind(results, data.frame(
+      review = i - 1,
+      day = current_day,
+      stability = state$stability,
+      difficulty = state$difficulty,
+      interval = interval,
+      rating = ratings[i]
+    ))
+  }
+
+  results
+}
+
+# Always "Good" (idealized) vs. a realistic mix of ratings
+ideal <- simulate_learning(n_reviews = 10, rating = 3)
+realistic <- simulate_realistic(c(3, 2, 3, 1, 3, 3, 2, 3, 3, 3, 3))
+
+# Log-scale plot comparing both scenarios
+plot(ideal$review, ideal$stability, type = "b", pch = 19, log = "y",
+     xlab = "Review Number", ylab = "Stability (days, log scale)",
+     main = "Stability Growth Over Reviews",
+     ylim = range(c(realistic$stability, ideal$stability)))
+lines(realistic$review, realistic$stability, type = "b", pch = 17, col = "steelblue")
+legend("topleft", legend = c("Always Good", "Mixed ratings"),
+       pch = c(19, 17), col = c("black", "steelblue"), lty = 1)
 grid()
 ```
 
