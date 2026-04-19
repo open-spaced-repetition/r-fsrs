@@ -7,7 +7,7 @@
 fsrs_version()
 }
 \value{
-Character string, e.g. "FSRS-5"
+Character string, e.g. "FSRS-6"
 }
 \description{
 Get the FSRS algorithm version used by this package

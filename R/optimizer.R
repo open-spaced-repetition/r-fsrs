@@ -137,14 +137,23 @@ fsrs_evaluate <- function(reviews, params = NULL) {
 #' }
 fsrs_anki_to_reviews <- function(revlog, min_reviews = 2) {
   if (!is.data.frame(revlog)) stop("revlog must be a data.frame")
-  card_col <- if ("cid" %in% names(revlog)) "cid" else if ("card_id" %in% names(revlog)) "card_id" else stop("revlog must have 'cid' or 'card_id' column")
-  rating_col <- if ("ease" %in% names(revlog)) "ease" else if ("rating" %in% names(revlog)) "rating" else stop("revlog must have 'ease' or 'rating' column")
-  time_col <- if ("id" %in% names(revlog)) "id" else if ("time" %in% names(revlog)) "time" else stop("revlog must have 'id' or 'time' column")
+  pick <- function(candidates, label) {
+    hit <- candidates[candidates %in% names(revlog)]
+    if (length(hit) == 0) {
+      stop(sprintf("revlog must have one of: %s (%s)",
+                   paste(candidates, collapse = ", "), label), call. = FALSE)
+    }
+    hit[1]
+  }
+  card_col   <- pick(c("cid", "card_id"), "card id")
+  rating_col <- pick(c("ease", "rating"), "rating")
+  time_col   <- pick(c("id", "rid", "time"), "timestamp")
+  type_col   <- intersect(c("review_type", "type"), names(revlog))
   df <- data.frame(
     card_id = revlog[[card_col]],
     rating = revlog[[rating_col]],
     time_ms = revlog[[time_col]],
-    review_type = if ("type" %in% names(revlog)) revlog[["type"]] else 1L
+    review_type = if (length(type_col) > 0) revlog[[type_col[1]]] else 1L
   )
   # Keep only review (1) and relearn (2) rows; exclude learning steps (0) and filtered (3)
   df <- df[df$review_type %in% c(1L, 2L), ]

@@ -2,7 +2,7 @@
 \alias{fsrs_default_parameters}
 \title{FSRS Default Parameters}
 \description{
-Returns the default 21 FSRS-5 parameters.
+Returns the default 21 FSRS-6 parameters.
 }
 \usage{
 fsrs_default_parameters()

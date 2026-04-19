@@ -121,8 +121,8 @@ test_that("preview_card returns all four outcomes", {
   }
 })
 
-test_that("fsrs_version returns FSRS-5", {
-  expect_equal(fsrs_version(), "FSRS-5")
+test_that("fsrs_version returns FSRS-6", {
+  expect_equal(fsrs_version(), "FSRS-6")
 })
 
 test_that("fsrs_new_card_state validates rating", {

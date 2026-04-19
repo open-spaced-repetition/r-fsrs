@@ -411,10 +411,10 @@ fsrs_simulate <- function(ratings, params = NULL, desired_retention = 0.9) {
 }
 
 #' Get the FSRS algorithm version used by this package
-#' @return Character string, e.g. "FSRS-5"
+#' @return Character string, e.g. "FSRS-6"
 #' @export
 fsrs_version <- function() {
-  "FSRS-5"
+  "FSRS-6"
 }
 
 # Input-checking wrappers around the low-level Rust bindings

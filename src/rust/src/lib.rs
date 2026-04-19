@@ -56,7 +56,8 @@ fn fsrs_next_state(
         difficulty: difficulty as f32
     };
     let r = (rating as u32).min(4).max(1);
-    let states = fsrs.next_states(Some(state), desired_retention as f32, elapsed_days as u32).unwrap();
+    let days = elapsed_days.max(0.0).round() as u32;
+    let states = fsrs.next_states(Some(state), desired_retention as f32, days).unwrap();
     let next = match r {
         1 => states.again.memory,
         2 => states.hard.memory,
@@ -88,7 +89,8 @@ fn fsrs_repeat(
         _ => None,
     };
     
-    let states = fsrs.next_states(state, desired_retention as f32, elapsed_days as u32).unwrap();
+    let days = elapsed_days.max(0.0).round() as u32;
+    let states = fsrs.next_states(state, desired_retention as f32, days).unwrap();
     
     let make_outcome = |item: &fsrs::ItemState| -> List {
         let interval = fsrs.next_interval(
@@ -231,8 +233,7 @@ fn fsrs_optimize(
             .collect();
         
         for i in 2..=card_reviews.len() {
-            let slice = &card_reviews[0..i];
-            if !slice.iter().any(|r| r.delta_t > 0) { continue; }
+            if card_reviews[i - 1].delta_t == 0 { continue; }
             items.push(FSRSItem {
                 reviews: card_reviews[0..i].to_vec(),
             });
@@ -305,8 +306,7 @@ fn fsrs_evaluate(
             .collect();
         
         for i in 2..=card_reviews.len() {
-            let slice = &card_reviews[0..i];
-            if !slice.iter().any(|r| r.delta_t > 0) { continue; }
+            if card_reviews[i - 1].delta_t == 0 { continue; }
             items.push(FSRSItem {
                 reviews: card_reviews[0..i].to_vec(),
             });

@@ -67,10 +67,10 @@ if (result$success) {
 ### Import from Anki
 
 ```r
-# With ankiR package
+# With the ankiR package
 library(ankiR)
-anki <- read_anki("collection.anki2")
-reviews <- fsrs_anki_to_reviews(anki$revlog)
+revlog <- anki_revlog()  # auto-detects the default profile
+reviews <- fsrs_anki_to_reviews(revlog)
 
 # Optimize
 result <- fsrs_optimize(reviews)
@@ -121,17 +121,35 @@ card$clone_card()
 
 ### Low-Level Functions
 
+Two parallel APIs are exported: validated R wrappers (recommended) and
+thin direct-to-Rust wrappers.
+
+**R wrappers (with argument checks):**
+
 | Function | Description |
 |----------|-------------|
-| `fsrs_default_parameters()` | Get 21 default FSRS-6 parameters |
-| `fsrs_initial_state(rating, params)` | Initial state for new card |
-| `fsrs_next_state(S, D, elapsed, rating, params)` | State after review |
-| `fsrs_next_interval(S, retention, params)` | Optimal interval |
-| `fsrs_retrievability(S, elapsed)` | Recall probability |
-| `fsrs_retrievability_vec(S, elapsed)` | Vectorized version |
-| `fsrs_repeat(S, D, elapsed, retention, params)` | All 4 outcomes at once |
-| `fsrs_from_sm2(ease, interval, retention, params)` | Convert from SM-2 |
-| `fsrs_memory_state(ratings, delta_ts, ...)` | State from history |
+| `fsrs_parameters()` | Get 21 default FSRS-6 parameters |
+| `fsrs_new_card_state(rating, params)` | Initial state for a new card |
+| `fsrs_next_memory_state(S, D, elapsed, rating, retention, params)` | State after a review |
+| `fsrs_interval(S, retention, params)` | Optimal next-review interval |
+| `fsrs_recall_probability(S, elapsed)` | Recall probability (scalar) |
+| `fsrs_recall_probability_vec(S, elapsed)` | Recall probability (vectorized) |
+| `fsrs_migrate_sm2(ease, interval, retention, params)` | Convert an SM-2 card to FSRS |
+| `fsrs_simulate(ratings, params, retention)` | Step through a rating sequence |
+| `fsrs_version()` | Algorithm version string |
+
+**Direct Rust bindings (unchecked):**
+
+| Function | Description |
+|----------|-------------|
+| `fsrs_default_parameters()` | Alias of `fsrs_parameters()` |
+| `fsrs_initial_state(rating, params)` | Raw initial state |
+| `fsrs_next_state(S, D, elapsed, rating, retention, params)` | Raw next state |
+| `fsrs_next_interval(S, retention, params)` | Raw next interval |
+| `fsrs_retrievability(S, elapsed)` | Raw retrievability |
+| `fsrs_retrievability_vec(S, elapsed)` | Raw vectorized retrievability |
+| `fsrs_from_sm2(ease, interval, retention, params)` | Raw SM-2 migration |
+| `fsrs_memory_state(ratings, delta_ts, S0, D0, params)` | State from a rating history |
 
 ## Understanding FSRS
 
@@ -141,7 +159,17 @@ FSRS models memory with three variables:
 - **Difficulty (D)**: How hard the material is (1-10)
 - **Retrievability (R)**: Current probability of recall
 
-The forgetting curve: `R(t) = (1 + t/(9·S))^(-0.5)`
+Forgetting curve (as implemented in `fsrs-rs`):
+
+```
+factor = 0.9^(1/-decay) - 1
+R(t)   = (1 + factor · t/S)^(-decay)
+```
+
+`decay` is the 21st parameter. With FSRS-6 defaults (`decay = 0.1542`)
+`factor ≈ 0.9804`; with FSRS-5 defaults (`decay = 0.5`) `factor ≈ 0.2346`.
+Either way `R(S) = 0.9`, i.e. stability is the interval at which recall
+falls to 90%.
 
 ## Resources
 
