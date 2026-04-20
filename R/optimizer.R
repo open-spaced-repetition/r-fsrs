@@ -33,20 +33,36 @@
 #' }
 #' }
 fsrs_optimize <- function(reviews, enable_short_term = TRUE, verbose = TRUE) {
-  if (!is.data.frame(reviews)) stop("reviews must be a data.frame")
+  if (!is.data.frame(reviews)) stop("reviews must be a data.frame", call. = FALSE)
   required_cols <- c("card_id", "rating", "delta_t")
   missing_cols <- setdiff(required_cols, names(reviews))
   if (length(missing_cols) > 0) {
-    stop("reviews must have columns: ", paste(missing_cols, collapse = ", "))
+    stop("reviews must have columns: ", paste(missing_cols, collapse = ", "),
+         call. = FALSE)
+  }
+  if (!is.numeric(reviews$rating) && !is.integer(reviews$rating)) {
+    stop("reviews$rating must be numeric or integer", call. = FALSE)
+  }
+  if (!is.numeric(reviews$delta_t) && !is.integer(reviews$delta_t)) {
+    stop("reviews$delta_t must be numeric or integer", call. = FALSE)
+  }
+  if (any(is.na(reviews$rating)) || any(is.na(reviews$delta_t)) ||
+      any(is.na(reviews$card_id))) {
+    stop("reviews must not contain NA in rating, delta_t, or card_id", call. = FALSE)
+  }
+  if (!all(reviews$rating == as.integer(reviews$rating))) {
+    stop("reviews$rating must contain integer values only (1-4)", call. = FALSE)
+  }
+  if (any(reviews$rating < 1 | reviews$rating > 4)) {
+    stop("All ratings must be between 1 and 4", call. = FALSE)
+  }
+  if (any(reviews$delta_t < 0)) {
+    stop("delta_t values must be non-negative", call. = FALSE)
   }
   card_review_counts <- table(reviews$card_id)
   valid_cards_check <- sum(card_review_counts >= 2)
-  if (valid_cards_check < 5) stop("Need at least 5 cards with 2+ reviews for optimization")
-  if (any(reviews$rating < 1 | reviews$rating > 4, na.rm = TRUE)) {
-    stop("All ratings must be between 1 and 4")
-  }
-  if (any(reviews$delta_t < 0, na.rm = TRUE)) {
-    stop("delta_t values must be non-negative")
+  if (valid_cards_check < 5) {
+    stop("Need at least 5 cards with 2+ reviews for optimization", call. = FALSE)
   }
   reviews <- reviews[order(reviews$card_id), ]
   card_ids <- reviews$card_id
@@ -97,14 +113,39 @@ fsrs_optimize <- function(reviews, enable_short_term = TRUE, verbose = TRUE) {
 #' cat("Custom RMSE:", custom_metrics$rmse_bins, "\n")
 #' }
 fsrs_evaluate <- function(reviews, params = NULL) {
-  if (!is.data.frame(reviews)) stop("reviews must be a data.frame")
+  if (!is.data.frame(reviews)) stop("reviews must be a data.frame", call. = FALSE)
   required_cols <- c("card_id", "rating", "delta_t")
   missing_cols <- setdiff(required_cols, names(reviews))
   if (length(missing_cols) > 0) {
-    stop("reviews must have columns: ", paste(missing_cols, collapse = ", "))
+    stop("reviews must have columns: ", paste(missing_cols, collapse = ", "),
+         call. = FALSE)
   }
-  if (is.null(params)) params <- fsrs_default_parameters()
-  if (length(params) != 21) stop("params must have exactly 21 values")
+  if (!is.numeric(reviews$rating) && !is.integer(reviews$rating)) {
+    stop("reviews$rating must be numeric or integer", call. = FALSE)
+  }
+  if (!is.numeric(reviews$delta_t) && !is.integer(reviews$delta_t)) {
+    stop("reviews$delta_t must be numeric or integer", call. = FALSE)
+  }
+  if (any(is.na(reviews$rating)) || any(is.na(reviews$delta_t)) ||
+      any(is.na(reviews$card_id))) {
+    stop("reviews must not contain NA in rating, delta_t, or card_id", call. = FALSE)
+  }
+  if (!all(reviews$rating == as.integer(reviews$rating)) ||
+      any(reviews$rating < 1 | reviews$rating > 4)) {
+    stop("reviews$rating must be integer values in 1:4", call. = FALSE)
+  }
+  if (any(reviews$delta_t < 0)) {
+    stop("delta_t values must be non-negative", call. = FALSE)
+  }
+  if (is.null(params)) {
+    params <- fsrs_default_parameters_raw()
+  } else {
+    if (!is.numeric(params) || length(params) != 21 ||
+        any(is.na(params)) || !all(is.finite(params))) {
+      stop("params must be a length-21 numeric vector with no NA/NaN/Inf",
+           call. = FALSE)
+    }
+  }
   reviews <- reviews[order(reviews$card_id), ]
   card_ids <- reviews$card_id
   card_changes <- c(TRUE, card_ids[-1] != card_ids[-length(card_ids)])
@@ -136,7 +177,12 @@ fsrs_evaluate <- function(reviews, params = NULL) {
 #' result <- fsrs_optimize(reviews)
 #' }
 fsrs_anki_to_reviews <- function(revlog, min_reviews = 2) {
-  if (!is.data.frame(revlog)) stop("revlog must be a data.frame")
+  if (!is.data.frame(revlog)) stop("revlog must be a data.frame", call. = FALSE)
+  if (!is.numeric(min_reviews) || length(min_reviews) != 1 ||
+      is.na(min_reviews) || min_reviews < 1 ||
+      min_reviews != as.integer(min_reviews)) {
+    stop("min_reviews must be a single integer >= 1", call. = FALSE)
+  }
   pick <- function(candidates, label) {
     hit <- candidates[candidates %in% names(revlog)]
     if (length(hit) == 0) {

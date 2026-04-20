@@ -59,7 +59,7 @@ Card <- R6::R6Class(
         return(1.0)
       }
       elapsed <- as.numeric(difftime(now, self$last_review, units = "days"))
-      fsrs_retrievability(self$stability, max(0, elapsed))
+      fsrs_retrievability_raw(self$stability, max(0, elapsed))
     },
     
     #' @description Serialize card to JSON
@@ -198,7 +198,7 @@ Scheduler <- R6::R6Class(
     initialize = function(parameters = NULL, desired_retention = 0.9, 
                           maximum_interval = 36500L, enable_fuzzing = FALSE) {
       self$parameters <- if (is.null(parameters)) {
-        fsrs_default_parameters()
+        fsrs_default_parameters_raw()
       } else {
         stopifnot(length(parameters) == 21)
         as.numeric(parameters)
@@ -218,7 +218,7 @@ Scheduler <- R6::R6Class(
       stability <- if (card$state == State$New) NULL else card$stability
       difficulty <- if (card$state == State$New) NULL else card$difficulty
       
-      outcomes <- fsrs_repeat(
+      outcomes <- fsrs_repeat_raw(
         stability = stability,
         difficulty = difficulty,
         elapsed_days = elapsed_days,
@@ -264,9 +264,9 @@ Scheduler <- R6::R6Class(
       
       # Get new memory state
       if (card$state == State$New) {
-        new_state <- fsrs_initial_state(rating, self$parameters)
+        new_state <- fsrs_initial_state_raw(rating, self$parameters)
       } else {
-        new_state <- fsrs_next_state(
+        new_state <- fsrs_next_state_raw(
           card$stability, card$difficulty, elapsed_days, rating,
           self$desired_retention, self$parameters
         )
@@ -284,7 +284,7 @@ Scheduler <- R6::R6Class(
       }
       
       # Calculate and apply interval
-      interval <- fsrs_next_interval(card$stability, self$desired_retention, self$parameters)
+      interval <- fsrs_next_interval_raw(card$stability, self$desired_retention, self$parameters)
       interval <- min(interval, self$maximum_interval)
       
       if (self$enable_fuzzing && interval > 2) {
@@ -324,7 +324,7 @@ Scheduler <- R6::R6Class(
       cat("  Desired retention:", sprintf("%.0f%%", self$desired_retention * 100), "\n")
       cat("  Maximum interval:", self$maximum_interval, "days\n")
       cat("  Fuzzing:", if (self$enable_fuzzing) "enabled" else "disabled", "\n")
-      cat("  Parameters:", if (identical(self$parameters, fsrs_default_parameters())) {
+      cat("  Parameters:", if (identical(self$parameters, fsrs_default_parameters_raw())) {
         "default"
       } else {
         "custom"
@@ -385,6 +385,9 @@ Scheduler_from_json <- function(json) {
 #' @return data.frame with review history
 #' @export
 fsrs_simulate <- function(ratings, params = NULL, desired_retention = 0.9) {
+  .check_ratings_vec(ratings)
+  .check_retention(desired_retention)
+  .check_params(params)
   scheduler <- Scheduler$new(
     parameters = params,
     desired_retention = desired_retention
@@ -419,12 +422,57 @@ fsrs_version <- function() {
 
 # Input-checking wrappers around the low-level Rust bindings
 
+.check_scalar_positive <- function(x, name) {
+  if (!is.numeric(x) || length(x) != 1 || is.na(x) || !is.finite(x) || x <= 0) {
+    stop(name, " must be a single finite positive number", call. = FALSE)
+  }
+}
+.check_scalar_nonneg <- function(x, name) {
+  if (!is.numeric(x) || length(x) != 1 || is.na(x) || !is.finite(x) || x < 0) {
+    stop(name, " must be a single finite non-negative number", call. = FALSE)
+  }
+}
+.check_rating_scalar <- function(x, name = "rating") {
+  if (!(is.numeric(x) || is.integer(x)) || length(x) != 1 || is.na(x) ||
+      !is.finite(x) || x != as.integer(x) || x < 1L || x > 4L) {
+    stop(name, " must be a single integer in 1:4", call. = FALSE)
+  }
+}
+.check_ratings_vec <- function(x, name = "ratings") {
+  if (!(is.numeric(x) || is.integer(x)) || length(x) == 0L ||
+      any(is.na(x)) || !all(is.finite(x)) ||
+      !all(x == as.integer(x)) || !all(x %in% 1:4)) {
+    stop(name, " must be a non-empty integer vector with all values in 1:4",
+         call. = FALSE)
+  }
+}
+.check_difficulty <- function(x, name = "difficulty") {
+  if (!is.numeric(x) || length(x) != 1 || is.na(x) || !is.finite(x) ||
+      x < 1 || x > 10) {
+    stop(name, " must be a single number in [1, 10]", call. = FALSE)
+  }
+}
+.check_retention <- function(x, name = "desired_retention") {
+  if (!is.numeric(x) || length(x) != 1 || is.na(x) || !is.finite(x) ||
+      x <= 0 || x >= 1) {
+    stop(name, " must be a single number in (0, 1)", call. = FALSE)
+  }
+}
+.check_params <- function(params) {
+  if (is.null(params)) return(invisible())
+  if (!is.numeric(params) || length(params) != 21 ||
+      any(is.na(params)) || !all(is.finite(params))) {
+    stop("params must be a length-21 numeric vector with no NA/NaN/Inf",
+         call. = FALSE)
+  }
+}
+
 #' @title Default FSRS parameters
 #' @description Returns the 21 default FSRS model weights.
 #' @return Numeric vector of length 21
 #' @export
 fsrs_parameters <- function() {
-  fsrs_default_parameters()
+  fsrs_default_parameters_raw()
 }
 
 #' @title Retrievability
@@ -433,11 +481,9 @@ fsrs_parameters <- function() {
 #' @return Recall probability between 0 and 1.
 #' @export
 fsrs_recall_probability <- function(stability, elapsed_days) {
-  stopifnot(
-    is.numeric(stability), length(stability) == 1, stability > 0,
-    is.numeric(elapsed_days), length(elapsed_days) == 1, elapsed_days >= 0
-  )
-  fsrs_retrievability(stability, elapsed_days)
+  .check_scalar_positive(stability, "stability")
+  .check_scalar_nonneg(elapsed_days, "elapsed_days")
+  fsrs_retrievability_raw(stability, elapsed_days)
 }
 
 #' @title Vectorized retrievability
@@ -446,12 +492,19 @@ fsrs_recall_probability <- function(stability, elapsed_days) {
 #' @return Numeric vector of recall probabilities.
 #' @export
 fsrs_recall_probability_vec <- function(stability, elapsed_days) {
-  stopifnot(
-    is.numeric(stability), all(stability > 0),
-    is.numeric(elapsed_days), all(elapsed_days >= 0),
-    length(stability) == length(elapsed_days)
-  )
-  fsrs_retrievability_vec(stability, elapsed_days)
+  if (!is.numeric(stability) || length(stability) == 0L ||
+      any(is.na(stability)) || !all(is.finite(stability)) ||
+      !all(stability > 0)) {
+    stop("stability must be a non-empty finite positive numeric vector",
+         call. = FALSE)
+  }
+  if (!is.numeric(elapsed_days) || length(elapsed_days) != length(stability) ||
+      any(is.na(elapsed_days)) || !all(is.finite(elapsed_days)) ||
+      !all(elapsed_days >= 0)) {
+    stop("elapsed_days must be a finite non-negative numeric vector the same length as stability",
+         call. = FALSE)
+  }
+  fsrs_retrievability_vec_raw(stability, elapsed_days)
 }
 
 #' @title Initial memory state for a new card
@@ -460,15 +513,9 @@ fsrs_recall_probability_vec <- function(stability, elapsed_days) {
 #' @return Named list with `stability` and `difficulty`.
 #' @export
 fsrs_new_card_state <- function(rating, params = NULL) {
-  stopifnot(
-    is.numeric(rating) || is.integer(rating),
-    length(rating) == 1,
-    rating %in% 1:4
-  )
-  if (!is.null(params)) {
-    stopifnot(is.numeric(params), length(params) == 21)
-  }
-  fsrs_initial_state(as.integer(rating), params)
+  .check_rating_scalar(rating)
+  .check_params(params)
+  fsrs_initial_state_raw(as.integer(rating), params)
 }
 
 #' @title Memory state after a review
@@ -482,20 +529,13 @@ fsrs_new_card_state <- function(rating, params = NULL) {
 #' @export
 fsrs_next_memory_state <- function(stability, difficulty, elapsed_days, rating,
                                    desired_retention = 0.9, params = NULL) {
-  stopifnot(
-    is.numeric(stability), length(stability) == 1, stability > 0,
-    is.numeric(difficulty), length(difficulty) == 1,
-      difficulty >= 1, difficulty <= 10,
-    is.numeric(elapsed_days), length(elapsed_days) == 1, elapsed_days >= 0,
-    (is.numeric(rating) || is.integer(rating)), length(rating) == 1,
-      rating %in% 1:4,
-    is.numeric(desired_retention), length(desired_retention) == 1,
-      desired_retention > 0, desired_retention < 1
-  )
-  if (!is.null(params)) {
-    stopifnot(is.numeric(params), length(params) == 21)
-  }
-  fsrs_next_state(stability, difficulty, elapsed_days, as.integer(rating),
+  .check_scalar_positive(stability, "stability")
+  .check_difficulty(difficulty)
+  .check_scalar_nonneg(elapsed_days, "elapsed_days")
+  .check_rating_scalar(rating)
+  .check_retention(desired_retention)
+  .check_params(params)
+  fsrs_next_state_raw(stability, difficulty, elapsed_days, as.integer(rating),
                   desired_retention, params)
 }
 
@@ -506,15 +546,10 @@ fsrs_next_memory_state <- function(stability, difficulty, elapsed_days, rating,
 #' @return Recommended interval in days.
 #' @export
 fsrs_interval <- function(stability, desired_retention = 0.9, params = NULL) {
-  stopifnot(
-    is.numeric(stability), length(stability) == 1, stability > 0,
-    is.numeric(desired_retention), length(desired_retention) == 1,
-      desired_retention > 0, desired_retention < 1
-  )
-  if (!is.null(params)) {
-    stopifnot(is.numeric(params), length(params) == 21)
-  }
-  fsrs_next_interval(stability, desired_retention, params)
+  .check_scalar_positive(stability, "stability")
+  .check_retention(desired_retention)
+  .check_params(params)
+  fsrs_next_interval_raw(stability, desired_retention, params)
 }
 
 #' @title Migrate an SM-2 card to FSRS
@@ -525,14 +560,54 @@ fsrs_interval <- function(stability, desired_retention = 0.9, params = NULL) {
 #' @return Named list with `stability` and `difficulty`.
 #' @export
 fsrs_migrate_sm2 <- function(ease_factor, interval, sm2_retention = 0.9, params = NULL) {
-  stopifnot(
-    is.numeric(ease_factor), length(ease_factor) == 1, ease_factor >= 1,
-    is.numeric(interval), length(interval) == 1, interval > 0,
-    is.numeric(sm2_retention), length(sm2_retention) == 1,
-      sm2_retention > 0, sm2_retention < 1
-  )
-  if (!is.null(params)) {
-    stopifnot(is.numeric(params), length(params) == 21)
+  if (!is.numeric(ease_factor) || length(ease_factor) != 1 ||
+      is.na(ease_factor) || !is.finite(ease_factor) || ease_factor < 1) {
+    stop("ease_factor must be a single finite number >= 1", call. = FALSE)
   }
-  fsrs_from_sm2(ease_factor, interval, sm2_retention, params)
+  .check_scalar_positive(interval, "interval")
+  .check_retention(sm2_retention, "sm2_retention")
+  .check_params(params)
+  fsrs_from_sm2_raw(ease_factor, interval, sm2_retention, params)
+}
+
+#' @title Memory state replayed from a rating history
+#' @description Replays a sequence of ratings and intervals to produce the
+#'   final FSRS memory state. When `initial_stability` and `initial_difficulty`
+#'   are both NULL, the first rating bootstraps the state as for a new card.
+#' @param ratings Integer vector of ratings (1=Again, 2=Hard, 3=Good, 4=Easy).
+#' @param delta_ts Integer vector of days elapsed before each rating, same
+#'   length as `ratings`. The first element is typically 0.
+#' @param initial_stability Optional positive numeric scalar; starting
+#'   stability before the first rating. Must be supplied together with
+#'   `initial_difficulty`.
+#' @param initial_difficulty Optional numeric scalar between 1 and 10;
+#'   starting difficulty. Must be supplied together with `initial_stability`.
+#' @param params Optional numeric vector of length 21.
+#' @return Named list with `stability` and `difficulty`.
+#' @export
+fsrs_memory_state_from_history <- function(ratings, delta_ts,
+                                            initial_stability = NULL,
+                                            initial_difficulty = NULL,
+                                            params = NULL) {
+  .check_ratings_vec(ratings)
+  if (!(is.numeric(delta_ts) || is.integer(delta_ts)) ||
+      length(delta_ts) != length(ratings) ||
+      any(is.na(delta_ts)) || !all(is.finite(delta_ts)) ||
+      !all(delta_ts >= 0)) {
+    stop("delta_ts must be a finite non-negative numeric vector the same length as ratings",
+         call. = FALSE)
+  }
+  if (is.null(initial_stability) != is.null(initial_difficulty)) {
+    stop("initial_stability and initial_difficulty must both be supplied, or both NULL",
+         call. = FALSE)
+  }
+  if (!is.null(initial_stability)) {
+    .check_scalar_positive(initial_stability, "initial_stability")
+    .check_difficulty(initial_difficulty, "initial_difficulty")
+  }
+  .check_params(params)
+  fsrs_memory_state_raw(
+    as.integer(ratings), as.integer(delta_ts),
+    initial_stability, initial_difficulty, params
+  )
 }

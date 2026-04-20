@@ -10,7 +10,7 @@ test_that("fsrs_evaluate validates input", {
     rating = rep(c(3, 3, 4), 5),
     delta_t = rep(c(0, 1, 3), 5)
   )
-  expect_error(fsrs_evaluate(reviews, params = c(1, 2, 3)), "exactly 21 values")
+  expect_error(fsrs_evaluate(reviews, params = c(1, 2, 3)), "length-21")
 })
 
 test_that("fsrs_anki_to_reviews converts data correctly", {

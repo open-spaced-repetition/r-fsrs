@@ -5,33 +5,32 @@
 #
 # This file was created with the following call:
 #   .Call("wrap__make_rfsrs_wrappers", use_symbols = TRUE, package_name = "rfsrs")
+#
+# Local edits: all direct Rust bindings are suffixed `_raw` and kept
+# internal. The public API is provided by validated wrappers in
+# fsrs_api.R and optimizer.R.
 
 #' @usage NULL
 #' @useDynLib rfsrs, .registration = TRUE
 NULL
 
-#' @export
-fsrs_default_parameters <- function() .Call(wrap__fsrs_default_parameters)
+fsrs_default_parameters_raw <- function() .Call(wrap__fsrs_default_parameters)
 
-#' @export
-fsrs_next_interval <- function(stability, desired_retention, params) .Call(wrap__fsrs_next_interval, stability, desired_retention, params)
+fsrs_next_interval_raw <- function(stability, desired_retention, params) .Call(wrap__fsrs_next_interval, stability, desired_retention, params)
 
-#' @export
-fsrs_initial_state <- function(rating, params) .Call(wrap__fsrs_initial_state, rating, params)
+fsrs_initial_state_raw <- function(rating, params) .Call(wrap__fsrs_initial_state, rating, params)
 
-#' @export
-fsrs_next_state <- function(stability, difficulty, elapsed_days, rating, desired_retention, params) .Call(wrap__fsrs_next_state, stability, difficulty, elapsed_days, rating, desired_retention, params)
+fsrs_next_state_raw <- function(stability, difficulty, elapsed_days, rating, desired_retention, params) .Call(wrap__fsrs_next_state, stability, difficulty, elapsed_days, rating, desired_retention, params)
 
-fsrs_repeat <- function(stability, difficulty, elapsed_days, desired_retention, params) .Call(wrap__fsrs_repeat, stability, difficulty, elapsed_days, desired_retention, params)
+fsrs_repeat_raw <- function(stability, difficulty, elapsed_days, desired_retention, params) .Call(wrap__fsrs_repeat, stability, difficulty, elapsed_days, desired_retention, params)
 
-#' @export
-fsrs_retrievability <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability, stability, elapsed_days)
+fsrs_retrievability_raw <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability, stability, elapsed_days)
 
-fsrs_retrievability_vec <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability_vec, stability, elapsed_days)
+fsrs_retrievability_vec_raw <- function(stability, elapsed_days) .Call(wrap__fsrs_retrievability_vec, stability, elapsed_days)
 
-fsrs_from_sm2 <- function(ease_factor, interval, sm2_retention, params) .Call(wrap__fsrs_from_sm2, ease_factor, interval, sm2_retention, params)
+fsrs_from_sm2_raw <- function(ease_factor, interval, sm2_retention, params) .Call(wrap__fsrs_from_sm2, ease_factor, interval, sm2_retention, params)
 
-fsrs_memory_state <- function(ratings, delta_ts, initial_stability, initial_difficulty, params) .Call(wrap__fsrs_memory_state, ratings, delta_ts, initial_stability, initial_difficulty, params)
+fsrs_memory_state_raw <- function(ratings, delta_ts, initial_stability, initial_difficulty, params) .Call(wrap__fsrs_memory_state, ratings, delta_ts, initial_stability, initial_difficulty, params)
 
 fsrs_optimize_raw <- function(ratings, delta_ts, card_starts, enable_short_term) .Call(wrap__fsrs_optimize, ratings, delta_ts, card_starts, enable_short_term)
 

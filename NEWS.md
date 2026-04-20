@@ -1,3 +1,21 @@
+# rfsrs 0.3.2
+
+## Breaking changes
+
+* Direct Rust bindings are now internal. Previously-exported
+  `fsrs_default_parameters()`, `fsrs_initial_state()`,
+  `fsrs_next_state()`, `fsrs_next_interval()`, `fsrs_retrievability()`
+  are renamed with a `_raw` suffix and no longer in the NAMESPACE.
+  Use the validated wrappers instead: `fsrs_parameters()`,
+  `fsrs_new_card_state()`, `fsrs_next_memory_state()`,
+  `fsrs_interval()`, `fsrs_recall_probability()`. Direct callers
+  can still reach the bindings via `rfsrs:::fsrs_*_raw`, but these
+  are not a stable API.
+
+## Documentation
+
+* README Low-Level table reduced to the validated wrappers only.
+
 # rfsrs 0.3.1
 
 ## Bug Fixes

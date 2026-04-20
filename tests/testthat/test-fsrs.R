@@ -1,6 +1,6 @@
 # Test default parameters
-test_that("fsrs_default_parameters returns 21 parameters", {
-  params <- fsrs_default_parameters()
+test_that("fsrs_parameters returns 21 parameters", {
+  params <- fsrs_parameters()
   expect_length(params, 21)
   expect_type(params, "double")
   expect_true(all(params >= 0))
@@ -29,34 +29,31 @@ test_that("fsrs_new_card_state stability increases with rating", {
   expect_lt(state_good$stability, state_easy$stability)
 })
 
-# Test retrievability
-test_that("fsrs_retrievability returns valid probability", {
+# Test recall probability
+test_that("fsrs_recall_probability returns valid probability", {
   stability <- 2.5
 
-  # Retrievability should be between 0 and 1
-  r <- fsrs_retrievability(stability, elapsed_days = 1)
+  r <- fsrs_recall_probability(stability, elapsed_days = 1)
   expect_gte(r, 0)
   expect_lte(r, 1)
 
-  # Retrievability should decrease over time
-  r1 <- fsrs_retrievability(stability, elapsed_days = 1)
-  r7 <- fsrs_retrievability(stability, elapsed_days = 7)
-  r30 <- fsrs_retrievability(stability, elapsed_days = 30)
+  r1 <- fsrs_recall_probability(stability, elapsed_days = 1)
+  r7 <- fsrs_recall_probability(stability, elapsed_days = 7)
+  r30 <- fsrs_recall_probability(stability, elapsed_days = 30)
 
   expect_gt(r1, r7)
   expect_gt(r7, r30)
 })
 
-test_that("fsrs_retrievability at day 0 is ~1", {
+test_that("fsrs_recall_probability at day 0 is ~1", {
   stability <- 5.0
-  r <- fsrs_retrievability(stability, elapsed_days = 0)
+  r <- fsrs_recall_probability(stability, elapsed_days = 0)
   expect_equal(r, 1, tolerance = 0.001)
 })
 
-test_that("fsrs_retrievability at stability days is ~0.9", {
+test_that("fsrs_recall_probability at stability days is ~0.9", {
   stability <- 10.0
-  # By definition, stability is time until R drops to 90%
-  r <- fsrs_retrievability(stability, elapsed_days = stability)
+  r <- fsrs_recall_probability(stability, elapsed_days = stability)
   expect_equal(r, 0.9, tolerance = 0.01)
 })
 

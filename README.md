@@ -121,11 +121,6 @@ card$clone_card()
 
 ### Low-Level Functions
 
-Two parallel APIs are exported: validated R wrappers (recommended) and
-thin direct-to-Rust wrappers.
-
-**R wrappers (with argument checks):**
-
 | Function | Description |
 |----------|-------------|
 | `fsrs_parameters()` | Get 21 default FSRS-6 parameters |
@@ -138,18 +133,8 @@ thin direct-to-Rust wrappers.
 | `fsrs_simulate(ratings, params, retention)` | Step through a rating sequence |
 | `fsrs_version()` | Algorithm version string |
 
-**Direct Rust bindings (unchecked):**
-
-| Function | Description |
-|----------|-------------|
-| `fsrs_default_parameters()` | Alias of `fsrs_parameters()` |
-| `fsrs_initial_state(rating, params)` | Raw initial state |
-| `fsrs_next_state(S, D, elapsed, rating, retention, params)` | Raw next state |
-| `fsrs_next_interval(S, retention, params)` | Raw next interval |
-| `fsrs_retrievability(S, elapsed)` | Raw retrievability |
-| `fsrs_retrievability_vec(S, elapsed)` | Raw vectorized retrievability |
-| `fsrs_from_sm2(ease, interval, retention, params)` | Raw SM-2 migration |
-| `fsrs_memory_state(ratings, delta_ts, S0, D0, params)` | State from a rating history |
+These are validated R wrappers around Rust. The underlying unchecked
+bindings (`rfsrs:::fsrs_*_raw`) are internal and not a stable API.
 
 ## Understanding FSRS
 
