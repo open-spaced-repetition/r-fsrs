@@ -7,5 +7,5 @@ edition = "2021"
 crate-type = ["staticlib"]
 
 [dependencies]
-extendr-api = "0.7"
+extendr-api = "0.9"
 fsrs = "5"
