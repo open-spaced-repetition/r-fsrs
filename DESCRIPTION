@@ -2,7 +2,7 @@ Package: rfsrs
 Title: R Bindings for FSRS Spaced Repetition Algorithm
 Version: 0.3.2
 Authors@R: person("Christos", "Longros", email = "chris.longros@gmail.com",
-    role = c("aut", "cre"))
+    role = c("aut", "cre"), comment = c(ORCID = "0009-0001-2717-0857"))
 Description: R bindings for the fsrs-rs Rust library implementing the Free 
     Spaced Repetition Scheduler (FSRS) algorithm. FSRS is a modern spaced 
     repetition algorithm based on the DSR (Difficulty, Stability, 
